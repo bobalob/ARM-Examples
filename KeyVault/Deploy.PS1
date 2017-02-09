@@ -24,12 +24,16 @@ if (!($SubscriptionId)) {
     Exit 1
 }
 
-# Use currently selected subscription Tenant and User Id to deploy the resources
+# Get the current logged in Azure AD user - This is the user who will have access to the key vault
 if ($microsoftAccount) {
     #Nasty hack for microsoft accounts
     $aadAccount = Get-AzureRmAdUser | Where-Object {
-        $_.UserPrincipalName -match ($Account.Context.Account.Id -Replace "@","_") |
-        Select-Object -First 1
+        $_.UserPrincipalName -match "^$($Account.Context.Account.Id -Replace "@","_")"
+    }
+    if ($aadAccount.count -gt 1) {
+        Write-Error "Not sure what to do, I found multiple users matching your account id"
+        $aadAccount
+        exit 1
     }
 } else {
     $aadAccount = Get-AzureRmAdUser -UserPrincipalName $Account.Context.Account.Id
