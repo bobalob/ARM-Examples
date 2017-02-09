@@ -26,8 +26,10 @@ if (!($SubscriptionId)) {
 
 # Use currently selected subscription Tenant and User Id to deploy the resources
 if ($microsoftAccount) {
+    #Nasty hack for microsoft accounts
     $aadAccount = Get-AzureRmAdUser | Where-Object {
-        $_.UserPrincipalName -match ($Account.Context.Account.Id -Replace "@","_")
+        $_.UserPrincipalName -match ($Account.Context.Account.Id -Replace "@","_") |
+        Select-Object -First 1
     }
 } else {
     $aadAccount = Get-AzureRmAdUser -UserPrincipalName $Account.Context.Account.Id
