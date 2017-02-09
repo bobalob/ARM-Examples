@@ -1,0 +1,94 @@
+    {
+        "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+            "keyVaultPrefix": {
+                "type": "string",
+                "defaultValue": "DeploymentVault",
+                "metadata": {
+                    "description": "KeyVault Account Name"
+                }
+            },
+            "storageAccountPrefix": {
+                "type": "string",
+                "defaultValue": "DeploymentVault",
+                "metadata": {
+                    "description": "KeyVault Account Name"
+                }
+            },
+            "tennantId": {
+                "type": "string",
+                "metadata": {
+                    "description": "The Tennant ID for the Key Vault"
+                }
+            },
+            "objectId": {
+                "type": "string",
+                "metadata": {
+                    "description": "User account or service principal with access to the vault"
+                }
+            }
+        },
+        "variables": {
+            "storageAccountName" : "[concat( parameters('storageAccountPrefix'), uniqueString(resourceGroup().id) )]",
+            "keyVaultName" : "[concat( parameters('keyVaultPrefix'), uniqueString(resourceGroup().id) )]"
+        },
+        "resources": [
+            {
+                "type": "Microsoft.Storage/storageAccounts",
+                "name": "[variables('storageAccountName')]",
+                "apiVersion": "2015-06-15",
+                "location": "[resourceGroup().location]",
+                "properties": {
+                    "accountType": "Standard_LRS"
+                }
+            },
+            {
+                "type": "Microsoft.KeyVault/vaults",
+                "apiVersion": "2015-06-01",
+                "name": "[variables('keyVaultName')]",
+                "location": "[resourceGroup().location]",
+                "dependsOn": [
+                    "[variables('storageAccountName')]"
+                ],
+                "properties": {
+                    "enabledForDeployment": false,
+                    "enabledForTemplateDeployment": true,
+                    "enabledForVolumeEncryption": false,
+                    "tenantId": "[parameters('tennantId')]",
+                    "accessPolicies": [
+                        {
+                            "tenantId": "[parameters('tennantId')]",
+                            "objectId": "[parameters('objectId')]",
+                            "permissions": {
+                                "keys": [
+                                    "all",
+                                ],
+                                "secrets": [
+                                    "all"
+                                ]
+                            }
+                        }
+                    ],
+                    "sku": {
+                        "name": "standard",
+                        "family": "A"
+                    }
+                },
+                "resources": [
+                    {
+                        "type": "secrets",
+                        "name": "storageKey1",
+                        "apiVersion": "2015-06-01",
+                        "properties": {
+                            "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+                        },
+                        "dependsOn": [
+                            "[variables('keyVaultName')]"
+                        ]
+                    }
+                ]
+            }
+        ],
+        "outputs": {}
+    }

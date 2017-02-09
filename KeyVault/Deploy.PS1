@@ -1,0 +1,53 @@
+Param(
+    $deploymentPrefix = "deploy",
+    $microsoftAccount = $true,
+    $location = "North Europe"
+)
+
+# Ask user to Login to Account
+$Account = Login-AzureRmAccount
+
+# Ask user to Select the Subscription
+$Subs = Get-AzureRmSubscription
+Foreach ($Sub in $Subs) {
+    $Sub
+    $Answer = Read-Host "Use this subscription? [Y/N]"
+    if ($Answer -eq "y") {
+        $SubscriptionId = $Sub.SubscriptionId
+        $Selected = Select-AzureRmSubscription -SubscriptionId $Sub.SubscriptionId
+        Break
+    }
+}
+
+if (!($SubscriptionId)) {
+    Write-Warning "No Subscription was selected"
+    Exit 1
+}
+
+# Use currently selected subscription Tenant and User Id to deploy the resources
+
+$tennantId = $Selected.Tenant.TenantId
+if ($microsoftAccount) {
+    $aadAccount = Get-AzureRmAdUser | ? {$_.UserPrincipalName -match ($Account.Context.Account.Id -Replace "@","_")}
+} else {
+    $aadAccount = Get-AzureRmAdUser -UserPrincipalName $Account.Context.Account.Id
+}
+
+$objectId = $aadAccount.Id
+
+# Deploy the prerequisite resources 
+
+$deploymentName = "$($deploymentPrefix)Deployment"
+$resourceGroupName = "$($deploymentPrefix)Resources"
+$storageAccountPrefix = "storage"
+$keyVaultPrefix = "keyvault"
+
+
+$parameters = @{"keyVaultPrefix"=$keyVaultPrefix;"storageAccountPrefix"=$storageAccountPrefix;"tennantId"=$tennantId;"objectId"=$objectId}
+
+Write-Host "Create Resource Group: $($resourceGroupName)"
+New-AzureRmResourceGroup -Name $resourceGroupName -Location $location
+Write-Host "Start Deployment"
+Write-Host ($parameters | Out-String)
+New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroupName -TemplateFile .\Resources\AzureDeploy.json -TemplateParameterObject $parameters
+
