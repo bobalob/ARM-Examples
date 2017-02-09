@@ -25,29 +25,32 @@ if (!($SubscriptionId)) {
 }
 
 # Use currently selected subscription Tenant and User Id to deploy the resources
-
-$tennantId = $Selected.Tenant.TenantId
 if ($microsoftAccount) {
-    $aadAccount = Get-AzureRmAdUser | ? {$_.UserPrincipalName -match ($Account.Context.Account.Id -Replace "@","_")}
+    $aadAccount = Get-AzureRmAdUser | Where-Object {
+        $_.UserPrincipalName -match ($Account.Context.Account.Id -Replace "@","_")
+    }
 } else {
     $aadAccount = Get-AzureRmAdUser -UserPrincipalName $Account.Context.Account.Id
 }
 
-$objectId = $aadAccount.Id
-
-# Deploy the prerequisite resources 
-
+# Set up parameters
 $deploymentName = "$($deploymentPrefix)Deployment"
 $resourceGroupName = "$($deploymentPrefix)Resources"
-$storageAccountPrefix = "storage"
-$keyVaultPrefix = "keyvault"
+$parameters = @{
+    "keyVaultPrefix"="keyvault";
+    "storageAccountPrefix"="storage";
+    "tennantId"=$Selected.Tenant.TenantId;
+    "objectId"=$aadAccount.Id
+}
 
-
-$parameters = @{"keyVaultPrefix"=$keyVaultPrefix;"storageAccountPrefix"=$storageAccountPrefix;"tennantId"=$tennantId;"objectId"=$objectId}
-
+# Deploy the prerequisite resources 
 Write-Host "Create Resource Group: $($resourceGroupName)"
 New-AzureRmResourceGroup -Name $resourceGroupName -Location $location
 Write-Host "Start Deployment"
 Write-Host ($parameters | Out-String)
-New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroupName -TemplateFile .\Resources\AzureDeploy.json -TemplateParameterObject $parameters
+
+New-AzureRmResourceGroupDeployment -Name $deploymentName `
+    -ResourceGroupName $resourceGroupName `
+    -TemplateFile .\Resources\AzureDeploy.json `
+    -TemplateParameterObject $parameters
 
