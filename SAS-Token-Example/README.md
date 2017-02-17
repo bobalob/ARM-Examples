@@ -5,7 +5,7 @@ ARM Example files to show the use of a SAS Key to access a Storage Account for l
 
 * Creates a Resource Group and Storage Account in PowerShell. 
 * Uploads the NetworkLinkedTemplate.json file.
-* Generates a SAS Key NetworkLinkedTemplate.json file.
+* Generates a SAS Key for NetworkLinkedTemplate.json file.
 * Deploys AzureDeploy.json
 
 ### AzureDeploy.json
