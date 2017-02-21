@@ -50,14 +50,14 @@
         }
     },
     "variables": {
-        "nicName": "[concat(paramters('vmName'), '-nic')]",
-        "nsgName": "[concat(paramters('vmName'), '-nsg')]",
+        "nicName": "[concat(parameters('vmName'), '-nic')]",
+        "nsgName": "[concat(parameters('vmName'), '-nsg')]",
         "addressPrefix": "10.0.0.0/16",
-        "subnetName": "[concat(paramters('vmName'), '-subnet1')]",
+        "subnetName": "[concat(parameters('vmName'), '-subnet1')]",
         "subnetPrefix": "10.0.0.0/24",
-        "publicIPAddressName": "[concat(paramters('vmName'), '-pip')]",
-        "dnsLabelPrefix": "[concat(paramters('vmName'), '-dns')]",
-        "virtualNetworkName": "[concat(paramters('vmName'), '-VNET')]",
+        "publicIPAddressName": "[concat(parameters('vmName'), '-pip')]",
+        "dnsLabelPrefix": "[concat(parameters('vmName'), '-dns')]",
+        "virtualNetworkName": "[concat(parameters('vmName'), '-VNET')]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
     },
     "resources": [
@@ -127,7 +127,7 @@
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[paramters('vmName')]",
+            "name": "[parameters('vmName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -137,7 +137,7 @@
                     "vmSize": "Standard_A2"
                 },
                 "osProfile": {
-                    "computerName": "[paramters('vmName')]",
+                    "computerName": "[parameters('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -151,9 +151,9 @@
                     "osDisk": {
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
-                        "name": "[concat(paramters('vmName'), '-osdisk')]",
+                        "name": "[concat(parameters('vmName'), '-osdisk')]",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',paramters('vmName'),'-osdisk.vhd')]"
+                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'-osdisk.vhd')]"
                         }
                     }
                 },
@@ -213,12 +213,12 @@
             }
         },
         {
-            "name": "[concat(paramters('vmName'), '/', paramters('vmName'), '-DSC')]",
+            "name": "[concat(parameters('vmName'), '/', parameters('vmName'), '-DSC')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', paramters('vmName'))]"
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
